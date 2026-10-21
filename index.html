@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Wizard's Chess — Garden Courtyard & Classic Staunton Edition</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Roboto, Roboto Mono & Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20,400,1,0" rel="stylesheet" />
+    <!-- Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Chess.js for 100% legal move validation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <!-- Application styles -->
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+    <!-- Full-Viewport 3D WebGL Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Single-Level Architectural Top Toolbar (Responsive Mobile 2-Row Grid / Desktop 1-Row Bar) -->
+    <header class="fixed left-1/2 -translate-x-1/2 z-20 w-full max-w-6xl pointer-events-none safe-top-header">
+        <div id="top-app-bar" class="arch-toolbar p-2 sm:px-3.5 sm:py-2 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-1.5 sm:gap-2 pointer-events-auto transition-colors duration-200">
+            
+            <!-- Top Row on Mobile / Left+Center on Desktop: Title Telemetry & Active Turn Status -->
+            <div class="flex items-center justify-between lg:justify-start gap-2 sm:gap-3 w-full lg:w-auto">
+                <!-- Brand & Match Telemetry -->
+                <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-[6px] bg-[#264A30] text-[#F4F2EC] flex items-center justify-center border border-[#1B3622] shadow-sm">
+                        <span class="material-symbols-rounded !text-[16px] sm:!text-[18px]">grid_view</span>
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <h1 class="text-xs sm:text-sm font-bold tracking-tight text-[#1C211E] leading-none truncate">Wizard's Chess</h1>
+                            <span class="hidden xl:inline-block font-mono-code text-[10px] font-medium px-1.5 py-0.5 rounded-[4px] bg-[#E5E1D6] text-[#3F4740] border border-[#CCC7B8]">STAUNTON 3D</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-[#525B54] mt-0.5 sm:mt-1 leading-none">
+                            <span id="last-move-chip" class="font-mono-code font-medium text-[#1C211E]">PLY: --</span>
+                            <span class="text-[#B8B3A3]">|</span>
+                            <span id="captured-chip" class="font-mono-code font-medium text-[#7A5922]">CAP: 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Turn Swatch (Rounded Square 4px) & Match Status Readout -->
+                <div id="status-pill" class="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[6px] bg-[#E8E4D9] border border-[#CCC7B8] shrink-0 lg:ml-2">
+                    <span id="turn-dot" class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[3px] bg-[#FAF8F5] border border-[#525B54] transition-colors duration-200 shrink-0"></span>
+                    <span id="status-text" class="text-[11px] sm:text-xs font-medium text-[#1C211E] tracking-tight whitespace-nowrap">White (Marble)</span>
+                </div>
+            </div>
+
+            <!-- Bottom Row on Mobile / Right on Desktop: Direct Single-Level Mechanical Controls -->
+            <div class="flex items-center justify-between sm:justify-end gap-1 sm:gap-1.5 w-full lg:w-auto overflow-x-auto no-scrollbar pt-1 lg:pt-0 border-t border-[#D6D2C4]/70 lg:border-t-0">
+                
+                <!-- Mode + Difficulty Grouped cleanly on Left of Control Strip -->
+                <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                    <!-- Mode Segmented Control (vs AI / 2P) -->
+                    <div class="arch-well flex items-center gap-0.5 shrink-0" role="group" aria-label="Game Mode">
+                        <button id="mode-ai-btn" onclick="setGameMode('ai')" class="arch-seg-btn arch-segmented-active px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium flex items-center gap-1" title="Play against Tactical Engine">
+                            <span class="material-symbols-rounded !text-[14px] sm:!text-[15px]">memory</span>
+                            <span>AI</span>
+                        </button>
+                        <button id="mode-pvp-btn" onclick="setGameMode('pvp')" class="arch-seg-btn px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium text-[#3F4740] hover:text-[#1C211E] flex items-center gap-1" title="Two Player Pass & Play">
+                            <span class="material-symbols-rounded !text-[14px] sm:!text-[15px]">people</span>
+                            <span>2P</span>
+                        </button>
+                    </div>
+
+                    <!-- AI Difficulty Segmented Control (Easy / Med / Hard / Exp) -->
+                    <div id="ai-difficulty-group" class="arch-well flex items-center gap-0.5 transition-opacity duration-200 shrink-0" role="group" aria-label="AI Difficulty">
+                        <button id="diff-easy-btn" onclick="setAIDifficulty('easy')" class="arch-seg-btn px-1.5 sm:px-2 py-1 font-mono-code text-[10px] sm:text-[11px] font-medium text-[#3F4740] hover:text-[#1C211E]" title="Easy: 1-Ply + High Variance">
+                            Easy
+                        </button>
+                        <button id="diff-medium-btn" onclick="setAIDifficulty('medium')" class="arch-seg-btn arch-segmented-active px-1.5 sm:px-2 py-1 font-mono-code text-[10px] sm:text-[11px] font-medium" title="Medium: 2-Ply Minimax">
+                            Med
+                        </button>
+                        <button id="diff-hard-btn" onclick="setAIDifficulty('hard')" class="arch-seg-btn px-1.5 sm:px-2 py-1 font-mono-code text-[10px] sm:text-[11px] font-medium text-[#3F4740] hover:text-[#1C211E]" title="Hard: 3-Ply Alpha-Beta + PST">
+                            Hard
+                        </button>
+                        <button id="diff-expert-btn" onclick="setAIDifficulty('expert')" class="arch-seg-btn px-1.5 sm:px-2 py-1 font-mono-code text-[10px] sm:text-[11px] font-medium text-[#3F4740] hover:text-[#1C211E]" title="Expert: 4-Ply Alpha-Beta + Quiescence">
+                            <span class=" sm:hidden">Exp</span>
+                            <span class="hidden sm:inline">Expert</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons (View, Undo, Audio, Reset) -->
+                <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                    <!-- Camera Preset Button -->
+                    <button id="camera-btn" onclick="cycleCameraPreset()" class="arch-btn arch-btn-surface px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium text-[#1C211E] flex items-center gap-1" title="Cycle Camera Angle">
+                        <span class="material-symbols-rounded text-[#264A30] !text-[17px]">videocam</span>
+                        <span id="camera-label" class="hidden md:inline font-mono-code text-[11px]">Garden</span>
+                    </button>
+
+                    <!-- Undo Move Button -->
+                    <button id="undo-btn" onclick="undoLastMove()" disabled class="arch-btn arch-btn-surface px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium text-[#1C211E] flex items-center gap-1" title="Undo Last Move">
+                        <span class="material-symbols-rounded text-[#264A30] !text-[17px]">undo</span>
+                        <span class="hidden xl:inline">Undo</span>
+                    </button>
+
+                    <!-- Sound Toggle Button -->
+                    <button id="sound-btn" onclick="toggleAudio()" class="arch-btn arch-btn-surface px-2 py-1 text-[#1C211E] flex items-center justify-center" title="Toggle Acoustics">
+                        <span id="sound-icon" class="material-symbols-rounded text-[#264A30] !text-[17px]">volume_up</span>
+                    </button>
+
+                    <!-- New Game Button -->
+                    <button onclick="resetGame()" class="arch-btn px-2.5 sm:px-3 py-1 bg-[#264A30] hover:bg-[#1E3B26] border border-[#193320] text-[#F4F2EC] text-[11px] sm:text-xs font-medium flex items-center gap-1 shadow-sm" title="Reset Board">
+                        <span class="material-symbols-rounded !text-[15px] sm:!text-[16px]">refresh</span>
+                        <span class="hidden sm:inline">Reset</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Endgame Modal Card (Rounded-Square 10px Architectural Dialog) -->
+    <div id="endgame-overlay" class="fixed inset-0 z-30 pointer-events-none flex items-center justify-center bg-black/25 opacity-0 transition-opacity duration-300">
+        <div id="endgame-card" class="arch-toolbar !rounded-[10px] p-6 max-w-sm w-[92%] border border-[#B8B3A3] shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="flex items-center gap-3 pb-3 mb-4 border-b border-[#D6D2C4]">
+                <div class="w-9 h-9 rounded-[6px] bg-[#264A30] text-[#F4F2EC] flex items-center justify-center">
+                    <span id="endgame-icon" class="material-symbols-rounded !text-[20px]">flag</span>
+                </div>
+                <div class="text-left">
+                    <div class="font-mono-code text-[10px] uppercase text-[#525B54] font-semibold">Match Concluded</div>
+                    <h2 id="endgame-title" class="text-lg font-bold text-[#1C211E] leading-tight">Checkmate</h2>
+                </div>
+            </div>
+            <p id="endgame-subtitle" class="text-xs text-[#3F4740] text-left leading-relaxed mb-5">White (Marble) wins the match in the courtyard.</p>
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#D6D2C4]">
+                <button onclick="resetGame()" class="arch-btn px-4 py-2 bg-[#264A30] hover:bg-[#1E3B26] border border-[#193320] text-[#F4F2EC] font-medium text-xs flex items-center gap-1.5">
+                    <span class="material-symbols-rounded !text-[16px]">refresh</span>
+                    New Match
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Application modules (loaded in dependency order) -->
+    <script src="src/core/namespace.js"></script>
+    <script src="src/core/constants.js"></script>
+    <script src="src/core/state.js"></script>
+    <script src="src/audio/sound.js"></script>
+    <script src="src/game/coordinates.js"></script>
+    <script src="src/textures/board.js"></script>
+    <script src="src/textures/stone.js"></script>
+    <script src="src/textures/soil.js"></script>
+    <script src="src/textures/rune.js"></script>
+    <script src="src/scene/camera.js"></script>
+    <script src="src/scene/garden.js"></script>
+    <script src="src/scene/chessboard.js"></script>
+    <script src="src/scene/setup.js"></script>
+    <script src="src/pieces/models.js"></script>
+    <script src="src/pieces/manager.js"></script>
+    <script src="src/game/highlights.js"></script>
+    <script src="src/game/effects.js"></script>
+    <script src="src/game/animations.js"></script>
+    <script src="src/ai/engine.js"></script>
+    <script src="src/ai/controller.js"></script>
+    <script src="src/ui/status.js"></script>
+    <script src="src/game/controls.js"></script>
+    <script src="src/game/input.js"></script>
+    <script src="src/render/loop.js"></script>
+    <script src="src/main.js"></script>
+</body>
+</html>

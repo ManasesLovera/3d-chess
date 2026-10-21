@@ -1,0 +1,144 @@
+:root {
+    --bg-primary: #35442F;
+    --surface-stone: rgba(243, 241, 236, 0.94);
+    --surface-well: #E5E1D6;
+    --border-hairline: #D6D2C4;
+    --border-strong: #B8B3A3;
+    --text-ink: #1C211E;
+    --text-muted: #525B54;
+    --accent-sage: #264A30;
+    --accent-terracotta: #B83B2A;
+    --accent-brass: #9C7832;
+}
+* {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+}
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
+    background-color: var(--bg-primary);
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-ink);
+    -webkit-font-smoothing: antialiased;
+}
+.font-mono-code {
+    font-family: 'Roboto Mono', monospace;
+    font-variant-numeric: tabular-nums;
+}
+#canvas-container {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 1;
+    touch-action: none;
+}
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    touch-action: none;
+}
+canvas:active {
+    cursor: grabbing;
+}
+/* Safe-area aware top header wrapper */
+.safe-top-header {
+    top: max(0.5rem, env(safe-area-inset-top));
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+}
+/* Architectural Matte Limestone Toolbar Surface (Rounded Square 8px) */
+.arch-toolbar {
+    background: var(--surface-stone);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-hairline);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(18, 24, 19, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    color: var(--text-ink);
+}
+/* Recessed Segmented Track (Rounded Square 6px) */
+.arch-well {
+    background: var(--surface-well);
+    border: 1px solid var(--border-hairline);
+    border-radius: 6px;
+    padding: 2px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+/* Tactile Mechanical Controls (Rounded Square 6px / 4px) */
+.arch-btn {
+    position: relative;
+    border-radius: 6px;
+    min-height: 34px;
+    transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+    touch-action: manipulation;
+}
+.arch-btn-surface {
+    background: #ECE9DF;
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.arch-btn:hover:not(:disabled) {
+    background: #E2DECFE8;
+    border-color: #9A9585;
+}
+.arch-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.arch-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.arch-seg-btn {
+    border-radius: 4px;
+    min-height: 30px;
+    transition: background-color 0.12s ease, color 0.12s ease;
+    touch-action: manipulation;
+}
+.arch-segmented-active {
+    background: var(--accent-sage) !important;
+    color: #F6F5F0 !important;
+    box-shadow: 0 1px 2px rgba(18, 28, 20, 0.25);
+}
+.material-symbols-rounded {
+    font-size: 18px;
+    line-height: 1;
+    vertical-align: middle;
+}
+/* Hide scrollbars on ultra-narrow horizontal control strip if needed */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+@media (min-width: 901px) {
+    .arch-btn {
+        min-height: 32px;
+    }
+    .arch-seg-btn {
+        min-height: 26px;
+    }
+}
+@keyframes pulse-border {
+    0%, 100% { border-color: #B83B2A; box-shadow: 0 4px 16px rgba(18, 24, 19, 0.22), 0 0 0 1px rgba(184, 59, 42, 0.4); }
+    50% { border-color: #D93829; box-shadow: 0 4px 16px rgba(18, 24, 19, 0.22), 0 0 0 3px rgba(217, 56, 41, 0.35); }
+}
+.check-alert {
+    animation: pulse-border 1.4s infinite ease-in-out;
+}
